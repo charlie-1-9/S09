@@ -3,6 +3,22 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
 
 
+#class OrderItemIn(BaseModel):
+ #   model_config = ConfigDict(extra="forbid")
+
+  #  product_id: str = Field(
+   #     min_length=1,
+    #    max_length=64,
+     #   pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]*$",
+    #)
+    #quantity: int = Field(ge=1, le=5)
+
+    #@field_validator("quantity", mode="before")
+    #@classmethod
+    #def validate_json_number_type(cls, value: object) -> object:
+     #   if isinstance(value, bool) or isinstance(value, float):
+      #      raise ValueError("quantity must be an integer")
+       # return value
 class OrderItemIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -11,15 +27,7 @@ class OrderItemIn(BaseModel):
         max_length=64,
         pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]*$",
     )
-    quantity: int = Field(ge=1, le=5)
-
-    @field_validator("quantity", mode="before")
-    @classmethod
-    def validate_json_number_type(cls, value: object) -> object:
-        if isinstance(value, bool) or isinstance(value, float):
-            raise ValueError("quantity must be an integer")
-        return value
-
+    quantity: StrictInt = Field(ge=1, le=5)
 
 class OrderCreate(BaseModel):
     model_config = ConfigDict(extra="forbid")
