@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import asyncio
+#import asyncio
 import hashlib
 import json
 import uuid
@@ -159,12 +159,21 @@ async def _create_or_replay(
                 )
             )
 
+        #event_payload = build_order_created_event(
+         #   order_id,
+          #  [
+           #     {"product_id": item.product_id, "quantity": item.quantity}
+            #    for item in payload.items
+            #],
+            #created_at,
+       # )
         event_payload = build_order_created_event(
             order_id,
             [
                 {"product_id": item.product_id, "quantity": item.quantity}
                 for item in payload.items
             ],
+            total_cents,
             created_at,
         )
         session.add(
@@ -239,7 +248,7 @@ async def create_order(
         request_hash,
         payload,
     )
-    await _confirmation_lead(context.notification_delay_ms)
+   # await _confirmation_lead(context.notification_delay_ms)
     return JSONResponse(
         status_code=201,
         content=snapshot,

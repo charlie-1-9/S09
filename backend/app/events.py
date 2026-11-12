@@ -31,9 +31,30 @@ def iso8601(value: datetime) -> str:
     return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+#def build_order_created_event(
+    #order_id: uuid.UUID,
+    #items: list[dict[str, Any]],
+   # created_at: datetime,
+#) -> dict[str, Any]:
+  #  return {
+       # "specversion": "1.0",
+        #"id": str(uuid.uuid4()),
+        #"source": EVENT_SOURCE,
+        #"type": EVENT_TYPE,
+        #"time": iso8601(created_at),
+        #"datacontenttype": "application/json",
+        #"data": {
+         #   "order_id": str(order_id),
+          #  "items": [
+           #     {"product_id": item["product_id"], "quantity": item["quantity"]}
+            #    for item in items
+      #      ],
+     #   },
+    #}
 def build_order_created_event(
     order_id: uuid.UUID,
     items: list[dict[str, Any]],
+    total_cents: int,
     created_at: datetime,
 ) -> dict[str, Any]:
     return {
@@ -49,9 +70,9 @@ def build_order_created_event(
                 {"product_id": item["product_id"], "quantity": item["quantity"]}
                 for item in items
             ],
+            "total_cents": total_cents,
         },
     }
-
 
 def _parse_uuid(value: Any) -> uuid.UUID | None:
     if not isinstance(value, str):
