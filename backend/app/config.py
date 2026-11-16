@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     db_connect_timeout_seconds: int = Field(default=5, ge=1, le=60)
     db_pool_size: int = Field(default=10, ge=1, le=100)
     db_max_overflow: int = Field(default=20, ge=0, le=200)
+    billing_base_url: str = ""
+    billing_token: SecretStr = SecretStr("")
+    billing_timeout_seconds: float = Field(default=15.0, ge=1.0, le=60.0)
+    billing_poll_seconds: float = Field(default=1.0, ge=0.2, le=30.0)
 
     @field_validator("database_url")
     @classmethod
@@ -79,6 +83,17 @@ class Settings(BaseSettings):
         if not value:
             raise ValueError("INSTANCE_ID must not be empty")
         return value
+
+    @field_validator("billing_base_url")
+    @classmethod
+    def validate_billing_base_url(cls, value: str) -> str:
+        value = value.strip().rstrip("/")
+        if value and not value.startswith("https://"):
+            raise ValueError("BILLING_BASE_URL must use https")
+        return value
+
+    def billing_enabled(self) -> bool:
+        return bool(self.billing_base_url and self.billing_token.get_secret_value().strip())
 
     def lab_key_value(self) -> str:
         return self.lab_key.get_secret_value()

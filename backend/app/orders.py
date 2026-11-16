@@ -13,7 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db import CAMPAIGN, utcnow
 from .events import build_order_created_event, iso8601
-from .models import Order, OrderItem, Outbox, Product
+#from .models import Order, OrderItem, Outbox, Product
+from .models import BillingInvoice, Order, OrderItem, Outbox, Product
 from .schemas import OrderCreate
 from .security import (
     ApiError,
@@ -186,7 +187,25 @@ async def _create_or_replay(
                 created_at=created_at,
             )
         )
-
+       # session.add(
+        #    BillingInvoice(
+         #       order_id=order_id,
+          #      status="pending",
+           #     created_at=created_at,
+            #    updated_at=created_at,
+            #)
+        #)
+        #await session.flush()
+        #return snapshot
+        await session.flush()
+        session.add(
+            BillingInvoice(
+                order_id=order_id,
+                status="pending",
+                created_at=created_at,
+                updated_at=created_at,
+            )
+        )
         await session.flush()
         return snapshot
 
