@@ -12,9 +12,11 @@ from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .db import CAMPAIGN, utcnow
+from .auth import get_optional_user
 from .events import build_order_created_event, iso8601
 #from .models import Order, OrderItem, Outbox, Product
-from .models import BillingInvoice, Order, OrderItem, Outbox, Product
+#from .models import BillingInvoice, Order, OrderItem, Outbox, Product
+from .models import BillingInvoice, Order, OrderItem, OrderOwner, Outbox, Product
 from .schemas import OrderCreate
 from .security import (
     ApiError,
@@ -49,6 +51,7 @@ async def _create_or_replay(
     idempotency_key: str,
     request_hash: str,
     payload: OrderCreate,
+    user_id: uuid.UUID | None = None,
 ) -> dict[str, Any]:
     lock_key = _advisory_lock_key(dataset_id, idempotency_key)
     async with session.begin():
@@ -197,6 +200,8 @@ async def _create_or_replay(
         #)
         #await session.flush()
         #return snapshot
+        if user_id is not None:
+            session.add(OrderOwner(order_id=order_id, user_id=user_id, created_at=created_at))
         await session.flush()
         session.add(
             BillingInvoice(
@@ -260,12 +265,21 @@ async def create_order(
 ) -> JSONResponse:
     key = validate_idempotency_key(idempotency_key)
     request_hash = _canonical_request_hash(payload)
+    #snapshot = await _create_or_replay(
+     #   session,
+      #  context.dataset_id,
+       # key,
+        #request_hash,
+        #payload,
+    #)
+    user = await get_optional_user(request)
     snapshot = await _create_or_replay(
         session,
         context.dataset_id,
         key,
         request_hash,
         payload,
+        user.id if user is not None else None,
     )
    # await _confirmation_lead(context.notification_delay_ms)
     return JSONResponse(

@@ -1986,3 +1986,50 @@ svg {
 .invoice-notice-title { margin: 0 0 4px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
 .invoice-notice-text { margin: 0 0 8px; font-size: 0.85rem; }
 .invoice-notice-text:last-child { margin-bottom: 0; }
+
+
+/* Login de usuario */
+.auth-bar { position: fixed; left: 16px; bottom: 16px; z-index: 900; display: flex; align-items: center; gap: 10px; background: #0f172a; color: #fff; border-radius: 999px; padding: 8px 14px; font-size: 0.85rem; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.25); }
+.auth-bar-button { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 999px; padding: 4px 12px; cursor: pointer; font: inherit; }
+.auth-bar-button:hover { background: rgba(255, 255, 255, 0.15); }
+.auth-user { font-weight: 600; }
+.auth-overlay { position: fixed; inset: 0; z-index: 1000; background: rgba(15, 23, 42, 0.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.auth-dialog { background: #fff; color: #0f172a; border-radius: 16px; padding: 24px; width: min(420px, 100%); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3); }
+.auth-title { margin: 0 0 4px; font-size: 1.25rem; }
+.auth-intro { margin: 0 0 16px; color: #475569; font-size: 0.9rem; }
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-label { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.85rem; }
+.auth-input { font: inherit; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 10px; }
+.auth-input:focus { outline: 2px solid #1d4ed8; outline-offset: 1px; }
+.auth-error { margin: 0; color: #b42318; background: #fef0ee; border-radius: 8px; padding: 8px 10px; font-size: 0.85rem; }
+.auth-footer { display: flex; justify-content: space-between; gap: 12px; }
+.auth-link { background: none; border: 0; color: #1d4ed8; cursor: pointer; font: inherit; font-size: 0.85rem; padding: 4px 0; text-decoration: underline; }
+
+
+/* Panel: que paso en la base de datos */
+.trace-slot { margin: 16px 0; }
+.trace { border: 1px solid #cfd8e3; border-radius: 12px; background: #f8fafc; padding: 12px 14px; }
+.trace-summary { cursor: pointer; font-weight: 700; }
+.trace-intro { margin: 8px 0 12px; font-size: 0.8rem; color: #475569; }
+.trace-group { margin-top: 14px; }
+.trace-group-title { margin: 0; font-size: 0.9rem; }
+.trace-actor { margin: 2px 0 8px; font-size: 0.75rem; color: #64748b; }
+.trace-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.trace-step { position: relative; display: grid; grid-template-columns: 22px 1fr; gap: 8px; align-items: start; }
+.trace-mark { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+.trace-step-done .trace-mark { background: #dff5e3; color: #0d5c2e; }
+.trace-step-wait .trace-mark { background: #e2e8f0; color: #64748b; }
+.trace-step-wait { opacity: 0.75; }
+.trace-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.trace-main { min-width: 0; }
+.trace-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.trace-table { font-family: ui-monospace, Consolas, monospace; font-weight: 700; font-size: 0.8rem; }
+.trace-op { font-size: 0.65rem; font-weight: 700; border-radius: 6px; padding: 2px 6px; background: #e2e8f0; color: #334155; }
+.trace-op-insert { background: #dff5e3; color: #0d5c2e; }
+.trace-op-update { background: #fff4e0; color: #7a4a00; }
+.trace-op-select { background: #e0ecff; color: #1e3a8a; }
+.trace-op-xadd, .trace-op-xreadgroup { background: #f3e8ff; color: #581c87; }
+.trace-time { margin-left: auto; font-size: 0.7rem; color: #64748b; font-variant-numeric: tabular-nums; }
+.trace-note { margin: 2px 0; font-size: 0.8rem; }
+.trace-sql { display: block; font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; color: #334155; background: #eef2f6; border-radius: 6px; padding: 4px 6px; white-space: pre-wrap; word-break: break-all; }
+.trace-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; font-size: 0.8rem; color: #475569; }

@@ -1,3 +1,5 @@
+import './auth';
+import { traceNode } from './trace';
 import { invoiceNode } from './invoice';
 import type { CartProblem } from './cart';
 import {
@@ -588,6 +590,7 @@ export function receiptPanelNodes(
       { class: 'receipt-note' },
       'Pago simulado: no se realizó ningún cobro. El pedido ya está confirmado en el servidor; la notificación simulada es independiente.'
     ),
+    traceNode(order.id),
     actions
   ];
 }

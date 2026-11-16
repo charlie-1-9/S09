@@ -16,6 +16,8 @@ from .config import get_settings
 from .db import Database
 from .events import create_redis
 from .lab import router as lab_router
+from .auth import router as auth_router
+from .trace import router as trace_router
 from .orders import router as orders_router
 from .security import (
     ApiError,
@@ -60,6 +62,8 @@ app = FastAPI(
 app.add_middleware(HardeningMiddleware, settings=settings)
 app.include_router(orders_router)
 app.include_router(lab_router)
+app.include_router(auth_router)
+app.include_router(trace_router)
 
 
 @app.exception_handler(ApiError)
