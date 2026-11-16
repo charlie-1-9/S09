@@ -1962,3 +1962,27 @@ svg {
     animation: none;
   }
 }
+
+
+/* Factura de demostracion (Semana 11) */
+.invoice-slot { margin: 16px 0; }
+.invoice { border: 1px solid #cfd8e3; border-radius: 12px; background: #fff; padding: 16px; margin-top: 8px; }
+.invoice-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding-bottom: 12px; border-bottom: 1px dashed #cfd8e3; }
+.invoice-title { margin: 0; font-size: 1rem; font-weight: 700; }
+.invoice-number { margin: 2px 0 0; font-size: 0.8rem; color: #475569; word-break: break-all; }
+.invoice-badge { background: #dff5e3; color: #0d5c2e; font-weight: 700; font-size: 0.75rem; border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
+.invoice-meta { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0; font-size: 0.85rem; }
+.invoice-meta dt { color: #64748b; }
+.invoice-meta dd { margin: 0; word-break: break-all; }
+.invoice-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.invoice-table th { text-align: left; color: #64748b; font-weight: 600; padding: 6px 0; border-bottom: 1px solid #e2e8f0; }
+.invoice-table td { padding: 8px 0; border-bottom: 1px solid #eef2f6; vertical-align: top; }
+.invoice-table .num { text-align: right; white-space: nowrap; padding-left: 8px; }
+.invoice-total { display: flex; justify-content: space-between; align-items: baseline; margin-top: 12px; font-size: 1.15rem; }
+.invoice-note { margin: 12px 0 0; font-size: 0.75rem; color: #64748b; }
+.invoice-notice { border-radius: 12px; padding: 12px 14px; margin-top: 8px; }
+.invoice-notice-pending { background: #eef4ff; color: #1e3a8a; }
+.invoice-notice-warn { background: #fff4e0; color: #7a4a00; }
+.invoice-notice-title { margin: 0 0 4px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.invoice-notice-text { margin: 0 0 8px; font-size: 0.85rem; }
+.invoice-notice-text:last-child { margin-bottom: 0; }

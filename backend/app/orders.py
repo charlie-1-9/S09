@@ -294,3 +294,38 @@ async def get_order(
     snapshot = dict(order.snapshot)
     snapshot["notification_status"] = order.notification_status
     return JSONResponse(content=snapshot)
+
+
+@router.get("/api/v1/orders/{order_id}/billing")
+async def get_order_billing(
+    order_id: str,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    context: DatasetContext = Depends(dataset_context),
+) -> JSONResponse:
+    try:
+        identifier = uuid.UUID(order_id)
+    except (ValueError, AttributeError, TypeError):
+        raise ApiError(404, "NOT_FOUND", "Order not found") from None
+
+    order = await session.get(Order, identifier)
+    if order is None or order.dataset_id != context.dataset_id:
+        raise ApiError(404, "NOT_FOUND", "Order not found")
+
+    billing = await session.get(BillingInvoice, identifier)
+    if billing is None:
+        raise ApiError(404, "NOT_FOUND", "Billing not found")
+
+    snapshot = dict(order.snapshot)
+    return JSONResponse(
+        content={
+            "order_id": str(identifier),
+            "status": billing.status,
+            "invoice_number": billing.invoice_number,
+            "currency": "PEN",
+            "items": snapshot.get("items", []),
+            "total_cents": snapshot.get("total_cents", order.total_cents),
+            "order_created_at": snapshot.get("created_at"),
+            "issued_at": iso8601(billing.updated_at) if billing.status == "issued" else None,
+        }
+    )

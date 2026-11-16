@@ -1,3 +1,4 @@
+import { invoiceNode } from './invoice';
 import type { CartProblem } from './cart';
 import {
   MAX_DISTINCT_PRODUCTS,
@@ -578,6 +579,7 @@ export function receiptPanelNodes(
     banner,
     idBlock,
     notification,
+    invoiceNode(order.id),
     el('h3', { class: 'section-label' }, 'Productos'),
     items,
     total,
