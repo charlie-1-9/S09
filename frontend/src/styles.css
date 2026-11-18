@@ -2033,3 +2033,9 @@ svg {
 .trace-note { margin: 2px 0; font-size: 0.8rem; }
 .trace-sql { display: block; font-family: ui-monospace, Consolas, monospace; font-size: 0.7rem; color: #334155; background: #eef2f6; border-radius: 6px; padding: 4px 6px; white-space: pre-wrap; word-break: break-all; }
 .trace-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; font-size: 0.8rem; color: #475569; }
+
+
+/* Login con Google */
+.auth-google { display: flex; justify-content: center; margin: 4px 0 14px; padding-bottom: 14px; border-bottom: 1px solid #e2e8f0; min-height: 44px; }
+.auth-legacy { margin: 0 0 8px; font-size: 0.8rem; color: #475569; }
+.auth-google[hidden] { display: none; }

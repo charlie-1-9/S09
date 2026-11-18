@@ -8,6 +8,7 @@ interface BillingItem {
 
 interface Billing {
   order_id: string;
+  customer_name: string | null;
   status: 'pending' | 'issued' | 'failed';
   invoice_number: string | null;
   items: BillingItem[];
@@ -58,6 +59,7 @@ function parseBilling(value: unknown): Billing | null {
   }
   return {
     order_id: typeof value.order_id === 'string' ? value.order_id : '',
+    customer_name: typeof value.customer_name === 'string' ? value.customer_name : null,
     status,
     invoice_number: typeof value.invoice_number === 'string' ? value.invoice_number : null,
     items,
@@ -173,6 +175,7 @@ function invoiceCard(billing: Billing): HTMLElement {
   const meta = node('dl', 'invoice-meta');
   const rows: Array<{ label: string; value: string }> = [
     { label: 'Fecha de emisi\u00f3n', value: dateTime(billing.issued_at) },
+    ...(billing.customer_name ? [{ label: 'Cliente', value: billing.customer_name }] : []),
     { label: 'Pedido', value: billing.order_id },
     { label: 'Moneda', value: 'Soles (PEN)' }
   ];

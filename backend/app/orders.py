@@ -330,10 +330,18 @@ async def get_order_billing(
     if billing is None:
         raise ApiError(404, "NOT_FOUND", "Billing not found")
 
+    viewer = await get_optional_user(request, strict=False)
+    customer_name: str | None = None
+    if viewer is not None:
+        owner = await session.get(OrderOwner, identifier)
+        if owner is not None and owner.user_id == viewer.id:
+            customer_name = viewer.display_name or viewer.username
+
     snapshot = dict(order.snapshot)
     return JSONResponse(
         content={
             "order_id": str(identifier),
+            "customer_name": customer_name,
             "status": billing.status,
             "invoice_number": billing.invoice_number,
             "currency": "PEN",

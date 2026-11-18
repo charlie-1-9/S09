@@ -120,12 +120,41 @@ async def get_optional_user(request: Request, strict: bool = True) -> User | Non
     return user
 
 
-def _session_payload(token: str, user_id: uuid.UUID, username: str) -> dict[str, object]:
-    return {"token": token, "user": {"id": str(user_id), "username": username}}
+def _session_payload(
+    token: str, user_id: uuid.UUID, username: str, name: str | None = None
+) -> dict[str, object]:
+    return {
+        "token": token,
+        "user": {"id": str(user_id), "username": username, "name": name or username},
+    }
+
+
+async def open_session(session_factory, user_id: uuid.UUID) -> str:
+    """Crea una sesion nueva para el usuario y devuelve el token en claro."""
+    token = secrets.token_urlsafe(32)
+    now = utcnow()
+    async with session_factory() as session:
+        async with session.begin():
+            await session.execute(delete(AuthSession).where(AuthSession.expires_at < now))
+            session.add(
+                AuthSession(
+                    token_hash=_hash_token(token),
+                    user_id=user_id,
+                    created_at=now,
+                    expires_at=now + timedelta(hours=SESSION_HOURS),
+                )
+            )
+    return token
 
 
 @router.post("/api/v1/auth/register")
 async def register(payload: Credentials, request: Request) -> JSONResponse:
+    # El registro es solo con Google (correo verificado): ver google_auth.py.
+    raise ApiError(
+        403,
+        "REGISTRATION_DISABLED",
+        "El registro con usuario y contrase\u00f1a est\u00e1 desactivado. Usa Google.",
+    )
     username = payload.username.lower()
     password_hash = await asyncio.to_thread(_hash_password, payload.password)
     token = secrets.token_urlsafe(32)
@@ -180,7 +209,9 @@ async def login(payload: Credentials, request: Request) -> JSONResponse:
                     expires_at=now + timedelta(hours=SESSION_HOURS),
                 )
             )
-    return JSONResponse(content=_session_payload(token, user.id, user.username))
+    return JSONResponse(
+        content=_session_payload(token, user.id, user.username, user.display_name)
+    )
 
 
 @router.get("/api/v1/auth/me")
@@ -188,7 +219,13 @@ async def me(request: Request) -> JSONResponse:
     user = await get_optional_user(request)
     if user is None:
         raise ApiError(401, "UNAUTHORIZED", "Inicia sesi\u00f3n para continuar.")
-    return JSONResponse(content={"id": str(user.id), "username": user.username})
+    return JSONResponse(
+        content={
+            "id": str(user.id),
+            "username": user.username,
+            "name": user.display_name or user.username,
+        }
+    )
 
 
 @router.post("/api/v1/auth/logout")

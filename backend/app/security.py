@@ -25,8 +25,10 @@ IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9_-]{8,80}$")
 
 CSP_VALUE = (
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; "
-    "img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; "
-    "connect-src 'self'; font-src 'self' data:; form-action 'self'"
+    "img-src 'self' data:; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; "
+    "script-src 'self' https://accounts.google.com/gsi/client; "
+    "connect-src 'self' https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; "
+    "font-src 'self' data:; form-action 'self'"
 )
 
 

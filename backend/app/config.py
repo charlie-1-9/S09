@@ -45,6 +45,13 @@ class Settings(BaseSettings):
     billing_timeout_seconds: float = Field(default=15.0, ge=1.0, le=60.0)
     billing_poll_seconds: float = Field(default=1.0, ge=0.2, le=30.0)
 
+    google_client_id: str = ""
+    smtp_host: str = ""
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    smtp_user: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    smtp_from: str = ""
+
     @field_validator("database_url")
     @classmethod
     def normalize_database_url(cls, value: str) -> str:
@@ -94,6 +101,12 @@ class Settings(BaseSettings):
 
     def billing_enabled(self) -> bool:
         return bool(self.billing_base_url and self.billing_token.get_secret_value().strip())
+
+    def google_enabled(self) -> bool:
+        return bool(self.google_client_id.strip())
+
+    def smtp_enabled(self) -> bool:
+        return bool(self.smtp_host.strip() and self.smtp_from.strip())
 
     def lab_key_value(self) -> str:
         return self.lab_key.get_secret_value()

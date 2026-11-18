@@ -3,6 +3,22 @@
 interface Session {
   token: string;
   username: string;
+  name?: string;
+}
+
+interface GoogleIdApi {
+  initialize(config: { client_id: string; callback: (response: { credential: string }) => void }): void;
+  renderButton(
+    host: HTMLElement,
+    options: { theme: string; size: string; text: string; shape: string; width: number }
+  ): void;
+  prompt(): void;
+}
+
+declare global {
+  interface Window {
+    google?: { accounts: { id: GoogleIdApi } };
+  }
 }
 
 const storageKey = 'flash.session';
@@ -24,7 +40,8 @@ function readSession(): Session | null {
     }
     const value: unknown = JSON.parse(raw);
     if (isRecord(value) && typeof value.token === 'string' && typeof value.username === 'string') {
-      return { token: value.token, username: value.username };
+      const name = typeof value.name === 'string' && value.name ? value.name : undefined;
+      return { token: value.token, username: value.username, name };
     }
   } catch {
     return null;
@@ -104,6 +121,12 @@ function friendlyAuthError(status: number, code: string): string {
   if (code === 'INVALID_CREDENTIALS') {
     return 'Usuario o contrase\u00f1a incorrectos.';
   }
+  if (code === 'INVALID_GOOGLE_TOKEN') {
+    return 'No se pudo validar tu cuenta de Google. Intenta de nuevo.';
+  }
+  if (code === 'GOOGLE_DISABLED') {
+    return 'El inicio de sesi\u00f3n con Google no est\u00e1 disponible.';
+  }
   if (code === 'USERNAME_TAKEN') {
     return 'Ese nombre de usuario ya existe.';
   }
@@ -127,17 +150,121 @@ async function submitCredentials(
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({ username, password })
     });
-    const data: unknown = await response.json().catch(() => null);
-    if (response.ok && isRecord(data) && typeof data.token === 'string' && isRecord(data.user)) {
-      const name = typeof data.user.username === 'string' ? data.user.username : username;
-      return { ok: true, session: { token: data.token, username: name } };
-    }
-    const error = isRecord(data) && isRecord(data.error) ? data.error : {};
-    const code = typeof error.code === 'string' ? error.code : '';
-    return { ok: false, message: friendlyAuthError(response.status, code) };
+    return await readAuthResponse(response, username);
   } catch {
     return { ok: false, message: 'No se pudo conectar con el servidor.' };
   }
+}
+
+async function readAuthResponse(
+  response: Response,
+  fallbackUsername: string
+): Promise<{ ok: true; session: Session } | { ok: false; message: string }> {
+  const data: unknown = await response.json().catch(() => null);
+  if (response.ok && isRecord(data) && typeof data.token === 'string' && isRecord(data.user)) {
+    const username = typeof data.user.username === 'string' ? data.user.username : fallbackUsername;
+    const name = typeof data.user.name === 'string' && data.user.name ? data.user.name : undefined;
+    return { ok: true, session: { token: data.token, username, name } };
+  }
+  const error = isRecord(data) && isRecord(data.error) ? data.error : {};
+  const code = typeof error.code === 'string' ? error.code : '';
+  return { ok: false, message: friendlyAuthError(response.status, code) };
+}
+
+async function submitGoogle(
+  credential: string
+): Promise<{ ok: true; session: Session } | { ok: false; message: string }> {
+  try {
+    const response = await nativeFetch('/api/v1/auth/google', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ credential })
+    });
+    return await readAuthResponse(response, '');
+  } catch {
+    return { ok: false, message: 'No se pudo conectar con el servidor.' };
+  }
+}
+
+let googleClientId: Promise<string | null> | null = null;
+let googleScript: Promise<void> | null = null;
+
+function loadGoogleClientId(): Promise<string | null> {
+  if (googleClientId === null) {
+    googleClientId = nativeFetch('/api/v1/auth/config', { headers: { Accept: 'application/json' } })
+      .then((response) => response.json() as Promise<unknown>)
+      .then((data) =>
+        isRecord(data) && typeof data.google_client_id === 'string' && data.google_client_id
+          ? data.google_client_id
+          : null
+      )
+      .catch(() => null);
+  }
+  return googleClientId;
+}
+
+function loadGoogleScript(): Promise<void> {
+  if (googleScript === null) {
+    googleScript = new Promise<void>((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.onload = () => {
+        resolve();
+      };
+      script.onerror = () => {
+        googleScript = null;
+        reject(new Error('google script failed'));
+      };
+      document.head.append(script);
+    });
+  }
+  return googleScript;
+}
+
+async function mountGoogleButton(
+  host: HTMLElement,
+  onSession: (session: Session) => void,
+  onError: (message: string) => void
+): Promise<void> {
+  const clientId = await loadGoogleClientId();
+  if (clientId === null) {
+    host.textContent = 'Google no est\u00e1 configurado (falta GOOGLE_CLIENT_ID).';
+    host.hidden = false;
+    return;
+  }
+  try {
+    await loadGoogleScript();
+  } catch {
+    host.textContent = 'No se pudo cargar Google. Revisa tu conexi\u00f3n.';
+    host.hidden = false;
+    return;
+  }
+  const api = window.google?.accounts.id;
+  if (!api || !host.isConnected) {
+    return;
+  }
+  api.initialize({
+    client_id: clientId,
+    callback: ({ credential }) => {
+      void submitGoogle(credential).then((result) => {
+        if (result.ok) {
+          onSession(result.session);
+        } else {
+          onError(result.message);
+        }
+      });
+    }
+  });
+  api.renderButton(host, {
+    theme: 'outline',
+    size: 'large',
+    text: 'continue_with',
+    shape: 'rectangular',
+    width: 280
+  });
+  host.hidden = false;
+  api.prompt();
 }
 
 function closeModal(): void {
@@ -156,18 +283,22 @@ function onEscape(event: KeyboardEvent): void {
 
 function openModal(mode: Mode, message = ''): void {
   closeModal();
-  const isLogin = mode === 'login';
 
   const dialog = node('div', 'auth-dialog');
   dialog.setAttribute('role', 'dialog');
   dialog.setAttribute('aria-modal', 'true');
   dialog.setAttribute('aria-labelledby', 'auth-title');
 
-  const title = node('h2', 'auth-title', isLogin ? 'Iniciar sesi\u00f3n' : 'Crear cuenta');
+  const title = node('h2', 'auth-title', 'Iniciar sesi\u00f3n');
   title.id = 'auth-title';
-  const intro = node('p', 'auth-intro', message || (isLogin ? 'Entra para hacer pedidos.' : 'Crea tu cuenta de demostraci\u00f3n.'));
+  const intro = node('p', 'auth-intro', message || 'Entra con tu cuenta de Google para hacer pedidos.');
 
   const form = node('form', 'auth-form');
+  const legacyNote = node(
+    'p',
+    'auth-legacy',
+    '\u00bfTienes una cuenta anterior? Entra con tu usuario y contrase\u00f1a.'
+  );
   const userLabel = node('label', 'auth-label', 'Usuario');
   const userInput = node('input', 'auth-input');
   userInput.type = 'text';
@@ -182,7 +313,7 @@ function openModal(mode: Mode, message = ''): void {
   const passInput = node('input', 'auth-input');
   passInput.type = 'password';
   passInput.name = 'password';
-  passInput.autocomplete = isLogin ? 'current-password' : 'new-password';
+  passInput.autocomplete = 'current-password';
   passInput.required = true;
   passInput.minLength = 8;
   passInput.maxLength = 128;
@@ -192,27 +323,20 @@ function openModal(mode: Mode, message = ''): void {
   error.setAttribute('role', 'alert');
   error.hidden = true;
 
-  const submit = node('button', 'button button-primary', isLogin ? 'Entrar' : 'Crear cuenta');
+  const submit = node('button', 'button button-primary', 'Entrar');
   submit.type = 'submit';
-
-  const switchButton = node(
-    'button',
-    'auth-link',
-    isLogin ? '\u00bfNo tienes cuenta? Reg\u00edstrate' : '\u00bfYa tienes cuenta? Inicia sesi\u00f3n'
-  );
-  switchButton.type = 'button';
-  switchButton.addEventListener('click', () => {
-    openModal(isLogin ? 'register' : 'login', message);
-  });
 
   const cancel = node('button', 'auth-link', 'Cancelar');
   cancel.type = 'button';
   cancel.addEventListener('click', closeModal);
 
   const footer = node('div', 'auth-footer');
-  footer.append(switchButton, cancel);
+  footer.append(cancel);
 
-  form.append(userLabel, passLabel, error, submit, footer);
+  const googleHost = node('div', 'auth-google');
+  googleHost.hidden = true;
+
+  form.append(legacyNote, userLabel, passLabel, error, submit, footer);
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     submit.disabled = true;
@@ -231,7 +355,18 @@ function openModal(mode: Mode, message = ''): void {
     });
   });
 
-  dialog.append(title, intro, form);
+  dialog.append(title, intro, googleHost, form);
+  void mountGoogleButton(
+    googleHost,
+    (next) => {
+      writeSession(next);
+      closeModal();
+    },
+    (message) => {
+      error.textContent = message;
+      error.hidden = false;
+    }
+  );
   overlay = node('div', 'auth-overlay');
   overlay.addEventListener('click', (event) => {
     if (event.target === overlay) {
@@ -260,7 +395,7 @@ function renderBar(): void {
     return;
   }
   if (session) {
-    const label = node('span', 'auth-user', `Hola, ${session.username}`);
+    const label = node('span', 'auth-user', `Hola, ${session.name ?? session.username}`);
     const button = node('button', 'auth-bar-button', 'Salir');
     button.type = 'button';
     button.addEventListener('click', logout);

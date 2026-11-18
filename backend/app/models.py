@@ -157,6 +157,9 @@ class User(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     username: Mapped[str] = mapped_column(String(32), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
+    email: Mapped[str | None] = mapped_column(String(320), nullable=True, unique=True)
+    google_sub: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    display_name: Mapped[str | None] = mapped_column(String(120), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=utcnow)
 
 
